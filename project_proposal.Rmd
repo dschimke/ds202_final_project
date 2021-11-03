@@ -1,0 +1,65 @@
+---
+title: "Project Proposal"
+author: "Daniel Schimke"
+date: "11/2/2021"
+output: html_document
+---
+
+I am the sole member of my group for this project.
+
+
+This is the dataset that I am using for this project. It contains a very large amount of data for the NFL over the past 20 years.
+
+NFL dataset: https://github.com/nflverse/nflreadR
+
+
+## Data Overview
+
+
+So far, I have looked at the 2020 season of the NFL. I may include some other seasons with my final analyses, but there is a vast amount of data so I'll only look at a single season for now. I had to import this data from a GitHub page. I found this data from the 'curated public datasets on GitHub' link in the Final Project Requirements page on Canvas. 
+
+
+The first and most major dataframe that I have created is the play-by-play data. Each row of this dataframe represents a play that was run during the season. For each of these plays, there were originally 372 columns. This was far too many variable to do any meaningful analysis on, so the first step was to narrow this down. I realized that many of the columns were found by doing calculations and analyzing the other columns, so I could either collapse these into a single column using a pivot or remove the column as I already have the information within the other columns. I eventually narrowed it down to the most important 23 columns and remained the about 48,000 rows for each of the plays ran in the season.
+
+
+The next dataframe that I will be using is the rosters for each of the NFL teams during the 2020 season. It includes a row for each of the about 4,600 active and inactive players in the NFL. I had to do a similar process to the first dataframe of going through the columns and keeping the key ones. This dataframe also has a column called 'gsis_id' which is an identifier that is unique to each player. This can be used to join with the play-by-play as that dataframe has corresponding columns with the same identifier ('passer_player_id' and 'receiver_player_id'). This is going to be very important during analysis as we can get information about the player that is involved in the plays.
+
+
+The final dataframe that I have cleaned and is ready is some basic information on each of the NFL teams. This has a column for the division that the team is in which is necessary for one of the questions that I want to answer. It has a column called 'team_abbr' which is also included in the other 2 dataframes so it can be joined on that column. These are the only dataframes that I expect to use throughout my analysis although another may be important if I don't have enough information or come up with another interesting question to answer.
+
+
+The structures of the dataframes is printed below.
+
+```{r}
+library(nflreadr)
+library(tidyverse)
+play_by_play <- load_pbp(seasons=2020)
+team_rosters <- load_rosters(seasons=2020)
+
+pbp <- play_by_play %>% select(play_id,game_id,home_team,away_team,week,posteam,yardline_100,game_date,drive,qtr,quarter_seconds_remaining,down,ydstogo,play_type,yards_gained,total_home_score,total_away_score,passer_player_id,receiver_player_id,rusher_player_id,lateral_receiver_player_id,lateral_rusher_player_id,play_type_nfl,fixed_drive,fixed_drive_result,season) %>% rename(yards_to_endzone = yardline_100) %>% pivot_longer(receiver_player_id:lateral_rusher_player_id,names_to="player_name_id",values_to="receiver_player_id") %>% select(-player_name_id) %>% group_by(play_id,game_id) %>% fill(receiver_player_id,.direction="downup") %>% unique() %>% ungroup()
+str(pbp)
+
+roster <- team_rosters %>% select(season,team,position,full_name,birth_date,height,weight,college,high_school,gsis_id)
+str(roster)
+
+teams <- load_teams() %>% select(team_abbr,team_name,team_id,team_division)
+str(teams)
+```
+
+
+
+## Plan and Questions to Answer
+
+The main thing that I would like to find out is which factors lead to a team going for it on first down and what makes them successful when going for it. Some initial ideas of factors to look into are the yards to reach a first down, the position on the field, the score of the game, and the time left on the game. All of these and more will need to be analyzed to see if they are causes. This is a very important part of a football game because getting a first down rather than punting can result in very big swings in games. This analysis would be very helpful to any football team because knowing when to go for it and when to not is a big decision and this analysis will help predict what will happen if a team goes for it in a certain scenario.
+
+
+Another topic that I would like to look into is what makes a good running back and what factors determine if a running back is effective. Some factors that I will look into for what makes a good running back is the height and weight as well as potentially the college each running back is from. I will first, however, have to determine how to tell if a running back is good or not. To do this, I will look at many factors such as the total number of yards they rush as well as the number of yards per rush and touchdowns they score. I have access to all of this information through the play-by-play dataframe. This analysis would be helpful for teams to determine if they currently have a high quality running back or if they should look for a replacement. It could also be used to look at college running backs to draft as we will know which traits work best for the NFL. 
+
+
+The final question that I am setting out to answer is which division is the most entertaining in the NFL. There are a total of 8 divisions in the NFL, each with 4 teams, and I want to find out which is the most interesting to watch. I will determine if a game is entertaining based on the offense that is played in the game. This can include the number of yards for each team as well as how many points are scored in the game. This analysis is useful as it gives insight for which games are going to be the most worth watching to see exciting play. This could also be used by broadcasting networks and put the more entertaining games in the primetime spots(evening games).
+
+
+Overall, the NFL is a very big organization with large amounts of money involved, so a small decision on when to broadcast a game can mean millions of dollars that could either be lost or gained. The play in the NFL is also at such a high level that a small decision like the size of their players they have or when to go for it on 4th down can make or break careers. An analysis like this is obviously not as impactful as COVID or another life or death issue, but this industry is massive and any advantage a team can get could make or break their careers. 
+
+
+
